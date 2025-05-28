@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, models
 import optuna
 import requests
 from dotenv import load_dotenv
@@ -37,7 +37,11 @@ PLATFORMS = ['google', 'foodpanda', 'uber_eats', 'zomato', 'all']  # Add more pl
 print("📦 Loading SentenceTransformer model globally...")
 
 try:
-    GLOBAL_MODEL = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device="cpu")
+    word_embedding_model = models.Transformer("sentence-transformers/all-MiniLM-L6-v2")
+    pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
+    GLOBAL_MODEL = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+    GLOBAL_MODEL.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+
 except Exception as e:
     print(f"❌ Global model load failed: {e}")
     GLOBAL_MODEL = None
